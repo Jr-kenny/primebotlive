@@ -1,16 +1,50 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState, useCallback } from "react";
+import Navbar from "@/components/Navbar";
+import Hero from "@/components/Hero";
+import IntentInput from "@/components/IntentInput";
+import ThinkingState from "@/components/ThinkingState";
+import ValidationResult from "@/components/ValidationResult";
+import ExecutionConfirmation from "@/components/ExecutionConfirmation";
+import Footer from "@/components/Footer";
 
-// IMPORTANT: Fully REPLACE this with your own code
-const PlaceholderIndex = () => {
-  // PLACEHOLDER: Replace this entire return statement with the user's app.
-  // The inline background color is intentionally not part of the design system.
+type AppState = "hero" | "input" | "thinking" | "result" | "executed";
+
+const Index = () => {
+  const [state, setState] = useState<AppState>("hero");
+  const [validationStatus, setValidationStatus] = useState<"safe" | "caution" | "blocked">("safe");
+
+  const handleStartSession = () => setState("input");
+
+  const handleSubmitIntent = () => setState("thinking");
+
+  const handleThinkingComplete = useCallback((result: "safe" | "caution" | "blocked") => {
+    setValidationStatus(result);
+    setState("result");
+  }, []);
+
+  const handleExecute = () => setState("executed");
+
+  const handleReevaluate = () => setState("input");
+
   return (
-    <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#fcfbf8' }}>
-      <img data-lovable-blank-page-placeholder="REMOVE_THIS" src="/placeholder.svg" alt="Your app will live here!" />
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+      <main className="flex-1 pt-16">
+        {state === "hero" && <Hero onStartSession={handleStartSession} />}
+        {state === "input" && <IntentInput onSubmit={handleSubmitIntent} />}
+        {state === "thinking" && <ThinkingState onComplete={handleThinkingComplete} />}
+        {state === "result" && (
+          <ValidationResult
+            status={validationStatus}
+            onExecute={handleExecute}
+            onReevaluate={handleReevaluate}
+          />
+        )}
+        {state === "executed" && <ExecutionConfirmation />}
+      </main>
+      <Footer />
     </div>
   );
 };
-
-const Index = PlaceholderIndex;
 
 export default Index;
