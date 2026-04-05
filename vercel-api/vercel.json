@@ -1,0 +1,19 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    { "source": "/health", "destination": "/api/health" },
+    { "source": "/payment-config", "destination": "/api/payment-config" },
+    { "source": "/analyze", "destination": "/api/analyze" },
+    { "source": "/execute", "destination": "/api/execute" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET, POST, OPTIONS" }
+      ]
+    }
+  ]
+}

@@ -9,8 +9,15 @@ lerna-debug.log*
 
 node_modules
 dist
+dist-server
 dist-ssr
 *.local
+.env
+.vercel
+.primebot-payment-ledger.json
+*.pid
+%TEMP%/
+.tmp-pip/
 
 # Editor directories and files
 .vscode/*

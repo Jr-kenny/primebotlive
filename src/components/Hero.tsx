@@ -38,8 +38,8 @@ const Hero = ({ onStartSession }: HeroProps) => {
         </h1>
 
         <p className="text-lg md:text-xl text-muted-foreground max-w-lg mx-auto mb-12 leading-relaxed">
-          Verify before you execute.<br />
-          DeFi decisions that think first.
+          From intent to execution<br />
+          intent-based DeFi execution engine powered by verifiable intelligence.
         </p>
 
         <Button

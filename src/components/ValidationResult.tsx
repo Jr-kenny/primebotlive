@@ -1,34 +1,39 @@
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { CheckCircle2, AlertTriangle, XOctagon } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Loader2, XOctagon } from "lucide-react";
 
-type ValidationStatus = "safe" | "caution" | "blocked";
+import { Button } from "@/components/ui/button";
+import type {
+  RoutePreference,
+  SwapRoutingSummary,
+  TradeAnalysis,
+  ValidationStatus,
+} from "@/lib/primebot-api";
 
 interface ValidationResultProps {
   status: ValidationStatus;
+  analysis: TradeAnalysis | null;
+  routing?: SwapRoutingSummary;
+  routePreference: RoutePreference;
+  onSelectRoutePreference: (preference: RoutePreference) => void;
   onExecute: () => void;
   onReevaluate: () => void;
+  isExecuting?: boolean;
 }
 
-const RESULTS: Record<ValidationStatus, {
-  icon: typeof CheckCircle2;
-  label: string;
-  confidence: string;
-  reasoning: string[];
-  borderClass: string;
-  iconClass: string;
-  labelClass: string;
-  bgClass: string;
-}> = {
+const RESULTS: Record<
+  ValidationStatus,
+  {
+    icon: typeof CheckCircle2;
+    label: string;
+    borderClass: string;
+    iconClass: string;
+    labelClass: string;
+    bgClass: string;
+  }
+> = {
   safe: {
     icon: CheckCircle2,
     label: "SAFE TO EXECUTE",
-    confidence: "97.3%",
-    reasoning: [
-      "Sufficient liquidity in WETH/USDC pool on Base Sepolia.",
-      "Slippage within 0.3% tolerance. No sandwich risk detected.",
-      "Gas estimate: 0.0004 ETH. Route optimized via single-hop.",
-    ],
     borderClass: "border-safe/30",
     iconClass: "text-safe",
     labelClass: "text-safe",
@@ -37,12 +42,6 @@ const RESULTS: Record<ValidationStatus, {
   caution: {
     icon: AlertTriangle,
     label: "PROCEED WITH CAUTION",
-    confidence: "68.1%",
-    reasoning: [
-      "Low liquidity detected — potential slippage above 2%.",
-      "Price impact may exceed acceptable threshold.",
-      "Consider reducing position size or waiting for deeper liquidity.",
-    ],
     borderClass: "border-caution/30",
     iconClass: "text-caution",
     labelClass: "text-caution",
@@ -51,12 +50,6 @@ const RESULTS: Record<ValidationStatus, {
   blocked: {
     icon: XOctagon,
     label: "BLOCKED",
-    confidence: "—",
-    reasoning: [
-      "Token contract flagged as honeypot on Base Sepolia.",
-      "Execution blocked to protect funds.",
-      "Do not interact with this contract.",
-    ],
     borderClass: "border-destructive/30",
     iconClass: "text-destructive",
     labelClass: "text-destructive",
@@ -64,7 +57,16 @@ const RESULTS: Record<ValidationStatus, {
   },
 };
 
-const ValidationResult = ({ status, onExecute, onReevaluate }: ValidationResultProps) => {
+const ValidationResult = ({
+  status,
+  analysis,
+  routing,
+  routePreference,
+  onSelectRoutePreference,
+  onExecute,
+  onReevaluate,
+  isExecuting = false,
+}: ValidationResultProps) => {
   const result = RESULTS[status];
   const Icon = result.icon;
 
@@ -76,42 +78,81 @@ const ValidationResult = ({ status, onExecute, onReevaluate }: ValidationResultP
       className="w-full max-w-2xl mx-auto px-6 py-16"
     >
       <div className={`border ${result.borderClass} rounded-md ${result.bgClass} p-6 space-y-6`}>
-        {/* Header */}
         <div className="flex items-center gap-3">
           <Icon className={`w-5 h-5 ${result.iconClass}`} />
           <span className={`text-sm font-mono uppercase tracking-widest ${result.labelClass}`}>
             {result.label}
           </span>
-          {result.confidence !== "—" && (
+          {analysis && (
             <span className="ml-auto text-xs font-mono text-muted-foreground">
-              Confidence: {result.confidence}
+              Risk: {analysis.risk.toUpperCase()}
             </span>
           )}
         </div>
 
-        {/* Reasoning */}
-        <div className="space-y-1.5">
-          {result.reasoning.map((line, i) => (
-            <motion.p
-              key={i}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 + i * 0.15 }}
-              className="text-sm font-mono text-muted-foreground"
-            >
-              {line}
-            </motion.p>
-          ))}
-        </div>
+        {analysis && (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <p className="text-base text-foreground leading-relaxed">{analysis.reason}</p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <SummaryCard label="Expected outcome" value={analysis.expectedOut} />
+                <SummaryCard label="Current route" value={readableRouteLabel(analysis.route)} />
+              </div>
+            </div>
 
-        {/* Actions */}
+            {routing && routing.options.length > 0 && (
+              <div className="space-y-3 rounded-md border border-border bg-background/60 p-4">
+                <div>
+                  <p className="text-sm font-medium text-foreground">What matters most to you?</p>
+                  <p className="text-xs font-mono text-muted-foreground">
+                    PrimeBot can re-rank the route before execution.
+                  </p>
+                </div>
+
+                <div className="grid gap-2">
+                  {routing.options.map((option) => (
+                    <button
+                      key={option.preference}
+                      type="button"
+                      onClick={() => onSelectRoutePreference(option.preference)}
+                      disabled={isExecuting}
+                      className={`rounded-md border px-4 py-3 text-left transition-colors ${
+                        option.preference === routePreference
+                          ? "border-primary/40 bg-primary/10"
+                          : "border-border bg-card/50 hover:bg-card"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-sm font-medium text-foreground">{option.title}</span>
+                        <span className="text-xs font-mono text-muted-foreground">{option.expectedOut}</span>
+                      </div>
+                      <p className="mt-1 text-sm text-muted-foreground">{option.summary}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {!analysis && (
+          <p className="text-sm text-muted-foreground">No analysis is available for this request.</p>
+        )}
+
         <div className="flex items-center gap-3 pt-2">
-          {status === "safe" && (
-            <Button variant="execute" onClick={onExecute} className="px-6">
-              Execute on Base Sepolia →
+          {status !== "blocked" && (
+            <Button variant="execute" onClick={onExecute} className="px-6" disabled={isExecuting}>
+              {isExecuting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                "Execute on Base Sepolia ->"
+              )}
             </Button>
           )}
-          <Button variant="muted" onClick={onReevaluate}>
+          <Button variant="muted" onClick={onReevaluate} disabled={isExecuting}>
             Re-evaluate
           </Button>
         </div>
@@ -119,5 +160,46 @@ const ValidationResult = ({ status, onExecute, onReevaluate }: ValidationResultP
     </motion.section>
   );
 };
+
+function SummaryCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md border border-border bg-background/70 px-4 py-3">
+      <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground">{label}</p>
+      <p className="mt-1 text-sm text-foreground">{value}</p>
+    </div>
+  );
+}
+
+function readableRouteLabel(route: string) {
+  if (route === "uniswap_v3_direct") {
+    return "Uniswap V3 direct route";
+  }
+
+  if (route === "uniswap_v3_multihop") {
+    return "Uniswap V3 multihop route";
+  }
+
+  if (route === "uniswap_v2_direct") {
+    return "Uniswap V2 direct route";
+  }
+
+  if (route === "uniswap_v2_multihop") {
+    return "Uniswap V2 multihop route";
+  }
+
+  if (route === "lifi_aggregated") {
+    return "LI.FI aggregated route";
+  }
+
+  if (route === "zeroex_aggregated") {
+    return "0x aggregated route";
+  }
+
+  if (route === "across_bridge") {
+    return "Across bridge";
+  }
+
+  return route;
+}
 
 export default ValidationResult;

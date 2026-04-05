@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
+import { AppKitButton } from "@reown/appkit/react";
 import { ArrowLeft, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 
@@ -40,9 +40,9 @@ const Navbar = ({ showBack, onBack }: NavbarProps) => {
         >
           {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </button>
-        <Button variant="outline" size="sm" className="font-mono text-xs">
-          Connect Wallet
-        </Button>
+        <div className="flex items-center">
+          <AppKitButton />
+        </div>
       </div>
     </motion.nav>
   );
