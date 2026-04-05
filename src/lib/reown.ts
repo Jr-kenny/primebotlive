@@ -6,11 +6,12 @@ const LOCALHOST_PUBLIC_PROJECT_ID = "b56e18d47c72ab683b10814fe9495694";
 
 const projectId = import.meta.env.VITE_REOWN_PROJECT_ID || LOCALHOST_PUBLIC_PROJECT_ID;
 const networks = [baseSepolia];
+const appUrl = import.meta.env.VITE_APP_URL || "http://localhost:8080";
 const metadata = {
   name: "PrimeBot",
   description: "PrimeBot pay-to-execute DeFi agent",
-  url: import.meta.env.VITE_APP_URL || "http://localhost:8080",
-  icons: ["https://avatars.githubusercontent.com/u/179229932"],
+  url: appUrl,
+  icons: [`${appUrl.replace(/\/$/, "")}/favicon.svg`],
 };
 
 const wagmiAdapter = new WagmiAdapter({

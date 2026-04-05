@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://skill-deploy-ou78zmzypb-codex-agent-deploys.vercel.app/:path*"
+      "destination": "https://primebot-api.vercel.app/:path*"
     }
   ]
 }
