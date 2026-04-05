@@ -1,7 +1,11 @@
 import { createPublicClient, http, type WalletClient } from "viem";
 import { baseSepolia } from "viem/chains";
 
-const API_BASE_URL = import.meta.env.VITE_PRIMEBOT_API_URL ?? "http://localhost:8787";
+const API_BASE_URL =
+  import.meta.env.VITE_PRIMEBOT_API_URL ??
+  (typeof window !== "undefined" && window.location.hostname === "localhost"
+    ? "http://localhost:8787"
+    : "/api");
 const BASE_RPC_URL = import.meta.env.VITE_BASE_RPC_URL ?? baseSepolia.rpcUrls.default.http[0];
 
 let paymentConfigPromise: Promise<ExecutionPaymentConfig> | undefined;
