@@ -6,7 +6,7 @@ This repository contains the full PrimeBot application:
 
 - a Vite/React frontend with Reown wallet connection
 - a Node.js TypeScript backend for deterministic parsing, routing, validation, and execution planning
-- a Vercel-ready backend deployment under [`vercel-api/`](./vercel-api)
+
 
 ## Submission Summary
 
